@@ -29,14 +29,13 @@ CREATE TABLE Transactions (
 
 CREATE TABLE Budgets (
     budget_id INT PRIMARY KEY NOT NULL AUTO_INCREMENT,
-    user_id INT,
-    category_id INT,
     start_date TIMESTAMP,
     end_date TIMESTAMP,
     budget_period YEAR,
     budget_amount DECIMAL(10, 2), -- Use DECIMAL type for better precision in monetary values
     FOREIGN KEY (user_id) REFERENCES User(user_id), -- Add foreign key constraint
     FOREIGN KEY (category_id) REFERENCES Categories(categories_id) -- Add foreign key constraint
+    UNIQUE (user_id, category_id) -- Add unique constraint for user and category
 );
 
 CREATE TABLE Categories (
