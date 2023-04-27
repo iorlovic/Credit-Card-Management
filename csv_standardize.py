@@ -4,18 +4,22 @@ import re
 
 
 def extract_merchant_name(input_string):
-    # Replace multiple spaces with a single space
-    input_string = re.sub(r'\s+', ' ', input_string).strip()
+    # Remove the spaces that have more than 2 spots
+    input_string = re.sub(r'\s{2,}', ' ', input_string)
 
-    # Find matches for uppercase words followed by uppercase words with spaces, lowercase letters, or digits
-    matches = re.findall(r'\b(?:[A-Z]+\s?)+[A-Z]+(?:[a-z\d]+)?(?=\s[A-Z]+\b)', input_string)
+    # Remove the leading and trailing spaces
+    input_string = input_string.strip()
 
-    if matches:
-        merchant_name = matches[0]
-    else:
-        merchant_name = ""
+    # Remove "AplPay" if it is at the front of the string
+    input_string = re.sub(r'^AplPay', '', input_string).strip()
 
-    return merchant_name
+    # Remove State Code from string:
+    input_string = re.sub(r'\s[A-Z]{2}$', '', input_string)
+
+    # Remove TST* if it is at the front of the string
+    input_string = re.sub(r'^TST\*', '', input_string)
+    
+    return input_string.strip()
 
 def read_csv():
     input_filename = input("Enter the path to the CSV file: ")
