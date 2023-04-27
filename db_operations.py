@@ -58,7 +58,22 @@ def pretty_print_table(connection, table_name):
     else:
         print(f"No data found for table {table_name}")
 
-def read_csv(conn):
+# This function prints a SQL table given a user id and table name
+def display_user_table (conn, user_id, tablename):
+    column_names = get_column_names(conn, tablename)
+    data_query = f"SELECT * FROM {tablename} WHERE user_id = {user_id}"
+    data = execute_read_query(conn, data_query)
+    
+    if column_names and data:
+        table = PrettyTable()
+        table.field_names = column_names
+        for row in data:
+            table.add_row(row)
+        print(table)
+    else:
+        print(f"No data found for table {tablename}")
+
+def import_transactions(conn):
     file_path = input("Enter the path to the CSV file: ")
 
     if os.path.exists(file_path):

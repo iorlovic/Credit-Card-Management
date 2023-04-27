@@ -13,11 +13,16 @@ VALUES (1, 1, 'Visa'),
        (4, 4, 'Discover');
 
 -- Insert sample data into Categories table
-INSERT INTO Categories (categories_id, category, description)
-VALUES (1, 'Groceries', 'Expenses on food and household items'),
-       (2, 'Entertainment', 'Expenses on movies, concerts, and other leisure activities'),
-       (3, 'Utilities', 'Expenses on electricity, gas, water, and other utilities'),
-       (4, 'Restaurants', 'Expenses on dining out and takeout food');
+INSERT INTO Categories (categories_id, category, description) VALUES
+    (1, 'Restaurant', 'Expenses for dining out at restaurants, cafes, or other food establishments'),
+    (2, 'Other', 'Expenses that do not fit into any other specific category'),
+    (3, 'Transportation', 'Expenses related to public transportation, fuel, vehicle maintenance, and other travel costs'),
+    (4, 'Merchandise & Supplies', 'Expenses for purchasing goods and supplies for personal or business use'),
+    (5, 'Business Services', 'Expenses for services provided by businesses, such as consulting, marketing, or outsourcing'),
+    (6, 'Fees & Adjustments', 'Expenses related to banking fees, service charges, fines, or other financial adjustments'),
+    (7, '', 'Expenses that have not been assigned a specific category'),
+    (8, 'Entertainment', 'Expenses for leisure activities, such as movies, concerts, sporting events, or other recreational events');
+
 
 -- Insert sample data into Transactions table
 INSERT INTO Transactions (transaction_id, card_id, user_id, amount, merchant, category_id, date)
