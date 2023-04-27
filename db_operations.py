@@ -3,6 +3,7 @@ import mysql.connector
 from mysql.connector import Error
 from prettytable import PrettyTable
 import csv
+from datetime import datetime
 
 def connect_database():
     try: 
@@ -66,20 +67,30 @@ def read_csv(conn):
 
         with open(file_path, 'r') as file:
             reader = csv.DictReader(file)
-
+            # Ask the user for the missing data
+            pretty_print_table(conn, 'Credit_Cards')
+            card_id = input("Enter the card ID for this record: ")
+            pretty_print_table(conn, 'User')
+            user_id = input("Enter the user ID for this record: ")    
+            
             # Iterate through each row in the CSV file
             for row in reader:
                 # Extract the data from the CSV row
                 date = row['Date']
-                merchant = row['Description']
+                merchant = row['Merchant']
                 amount = row['Amount']
                 category_name = row['Category'].split('-')[0].strip()
 
+                if len(category_name) > 15:
+                    print(f"Warning: Category name '{category_name}' is longer than 15 characters.")
                 # Get the category_id from the Category table using the category name
                 get_category_id_query = "SELECT categories_id FROM Categories WHERE category = %s"
                 cursor.execute(get_category_id_query, (category_name,))
                 result = cursor.fetchone()
 
+                # Make the datetime format to be compatible with MySQL
+                date_obj = datetime.strptime(date, '%m/%d/%y') # Convert to datetime object
+                formatted_date = date_obj.strftime('%Y-%m-%d') # Convert to MySQL compatible format
                 if result:
                     category_id = result[0]
                 else:
@@ -88,19 +99,17 @@ def read_csv(conn):
                     add_category_query = "INSERT INTO Categories (category) VALUES (%s)"
                     cursor.execute(add_category_query, (category_name,))
                     conn.commit()
-
-                # Ask the user for the missing data
-                pretty_print_table(conn, 'Credit_Cards')
-                card_id = input("Enter the card ID for this record: ")
-                pretty_print_table(conn, 'User')
-                user_id = input("Enter the user ID for this record: ")
+                    # get the new category_id
+                    cursor.execute(get_category_id_query, (category_name,))
+                    result = cursor.fetchone()
+                    category_id = result[0]
 
                 # Prepare the SQL query for inserting the data into the Transactions table
                 query = f"""INSERT INTO Transactions (card_id, user_id, amount, merchant, category_id, date)
                             VALUES (%s, %s, %s, %s, %s, %s)"""
 
                 # Execute the query and insert the data
-                cursor.execute(query, (card_id, user_id, amount, merchant, category_id, date))
+                cursor.execute(query, (card_id, user_id, amount, merchant, category_id, formatted_date))
 
         # Commit the transaction
         conn.commit()

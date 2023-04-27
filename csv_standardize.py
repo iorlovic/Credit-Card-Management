@@ -17,9 +17,19 @@ def extract_merchant_name(input_string):
     input_string = re.sub(r'\s[A-Z]{2}$', '', input_string)
 
     # Remove TST* if it is at the front of the string
-    input_string = re.sub(r'^TST\*', '', input_string)
+    input_string = re.sub(r'^TST\*', '', input_string).strip()
+    
+    # Only have the first 20 letters of the string
+    input_string = input_string[:20]
     
     return input_string.strip()
+
+def process_category_string(category_string):
+    # Split the string at the dash (-) and take the first part
+    category_string = category_string.split('-')[0].strip()
+    # Only have the first 20 letters of the string
+    category_string = category_string[:20]
+    return category_string.strip()
 
 def read_csv():
     input_filename = input("Enter the path to the CSV file: ")
@@ -41,7 +51,7 @@ def read_csv():
                 description = row['Description']
 
                 merchant = extract_merchant_name(merchant)
-
+                category = process_category_string(category)
                 writer.writerow({
                     'Date': date,
                     'Merchant': merchant,
