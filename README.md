@@ -13,3 +13,6 @@ List of Functionality:
 - add more tables... (budget table, transaction history, pie chart)
 - incorporate login using user email and user_id
 - 
+
+More notes:
+- for the import csv function, csv_standardize.py allows user to be able to upload raw amex data, and it formats it correctly.
