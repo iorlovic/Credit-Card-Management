@@ -125,7 +125,13 @@ def print_menu():
     print("2. Create a budget")
     print("3. Display transactions by category (Pie chart)")
     print("4. Display budget vs. spending (Bar chart)")
-    print("5. Quit")
+    print("5. Create a new user")
+    print("6. Create a new card")
+    print("7. Search for a transaction")
+    print("8. Print transactions by category_id")
+    print("9. Add a financial statement")
+    print("10. Print SQL tables")
+    print("11. Exit")
 
 def main():
     conn = connect_database()
@@ -144,6 +150,20 @@ def main():
         elif choice == 4:
             budget_vs_spending_graph(conn, user_id)
         elif choice == 5:
+            create_user(conn)
+        elif choice == 6:
+            create_card(conn, user_id)
+        elif choice == 7:
+            search_transactions(conn, user_id)
+        elif choice == 8:
+            print_transactions_by_category_id(conn, user_id)
+        elif choice == 9:
+            add_transaction(conn, user_id)
+        elif choice == 10:
+            # Pirnts all of the SQL tables.
+            print_table = input("Which table would you like to print? ")
+            display_table(conn, print_table)
+        elif choice == 11:
             print("Thank you for using the Credit Application Database. Goodbye!")
             break
         else:

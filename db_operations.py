@@ -7,7 +7,6 @@ from datetime import datetime
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-import csv_stamdardize
 
 def connect_database():
     try: 
@@ -139,29 +138,51 @@ def import_transactions(conn):
     else:
         print("File not found. Please enter a valid file path.")
 
-def create_user(conn, email):
-    # ...
-    pass
+import mysql.connector
+
+# Create a new user
+def create_user(conn):
+    email = input("Enter user email: ")
+    first_name = input("Enter first name: ")
+    last_name = input("Enter last name: ")
+    cursor = conn.cursor()
+    cursor.execute("INSERT INTO User (email, first_name, last_name) VALUES (%s, %s, %s)", (email, first_name, last_name))
+    conn.commit()
+    print("User created successfully")
+
 # Create a new card
-def create_card(conn, user_id, card_name):
-    # ...
-    pass
+def create_card(conn, user_id):
+    card_name = input("Enter card name: ")
+    cursor = conn.cursor()
+    cursor.execute("INSERT INTO Credit_Cards (user_id, card_provider) VALUES (%s, %s)", (user_id, card_name))
+    conn.commit()
+    print("Card created successfully")
 
 # Search for a transaction
-def search_transactions(conn, user_id, search_params):
-    # ...
-    pass
+def search_transactions(conn, user_id):
+    search_query = input("Enter search query: ")
+    cursor = conn.cursor()
+    cursor.execute("SELECT * FROM transactions WHERE user_id = %s AND (merchant LIKE %s)", (user_id, f'%{search_query}%'))
+    transactions = cursor.fetchall()
+    for transaction in transactions:
+        print(transaction)
+
 # Print transactions by category_id
-def print_transactions_by_category_id(conn, user_id, category_id):
-    # ...
-    pass
-# Add, edit, and delete data (financial statements)
-def add_financial_statement(conn, user_id, statement_data):
-    # ...
-    pass
-def edit_financial_statement(conn, statement_id, new_data):
-    # ...
-    pass
-def delete_financial_statement(conn, statement_id):
-    # ...   
-    pass
+def print_transactions_by_category_id(conn, user_id):
+    category_id = input("Enter category ID: ")
+    cursor = conn.cursor()
+    cursor.execute("SELECT * FROM transactions WHERE user_id = %s AND category_id = %s", (user_id, category_id))
+    transactions = cursor.fetchall()
+    for transaction in transactions:
+        print(transaction)
+
+# Add a transaction
+def add_transaction(conn, user_id):
+    merchant = input("Enter merchant name: ")
+    amount = float(input("Enter transaction amount: "))
+    date = input("Enter transaction date (YYYY-MM-DD): ")
+    
+    cursor = conn.cursor()
+    cursor.execute("INSERT INTO Transactions (user_id, merchant, amount, date) VALUES (%s, %s, %s, %s)", (user_id, merchant, amount, date))
+    conn.commit()
+    print("Transaction added successfully")
