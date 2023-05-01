@@ -4,6 +4,10 @@ from mysql.connector import Error
 from prettytable import PrettyTable
 import csv
 from datetime import datetime
+import matplotlib.pyplot as plt
+import numpy as np
+import pandas as pd
+import csv_stamdardize
 
 def connect_database():
     try: 
@@ -134,3 +138,30 @@ def import_transactions(conn):
 
     else:
         print("File not found. Please enter a valid file path.")
+
+def create_user(conn, email):
+    # ...
+    pass
+# Create a new card
+def create_card(conn, user_id, card_name):
+    # ...
+    pass
+
+# Search for a transaction
+def search_transactions(conn, user_id, search_params):
+    # ...
+    pass
+# Print transactions by category_id
+def print_transactions_by_category_id(conn, user_id, category_id):
+    # ...
+    pass
+# Add, edit, and delete data (financial statements)
+def add_financial_statement(conn, user_id, statement_data):
+    # ...
+    pass
+def edit_financial_statement(conn, statement_id, new_data):
+    # ...
+    pass
+def delete_financial_statement(conn, statement_id):
+    # ...   
+    pass

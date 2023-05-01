@@ -31,7 +31,7 @@ def process_category_string(category_string):
     category_string = category_string[:20]
     return category_string.strip()
 
-def read_csv():
+def read_csv(input_file):
     input_filename = input("Enter the path to the CSV file: ")
     output_filename = input("Enter the path for the output CSV file: ")
 

@@ -7,20 +7,6 @@ def display_table(conn, tablename):
 def display_user_table (conn, user_id, tablename):
     db.display_user_table(conn, user_id, tablename)
 
-
-# Another possibly for a budget SCHEMA
-'''
-CREATE TABLE Budgets (
-    budget_id INT PRIMARY KEY NOT NULL AUTO_INCREMENT,
-    user_id INT,
-    category_id INT,
-    budget_frequency ENUM('monthly', 'quarterly', 'yearly'),
-    budget_amount DECIMAL(10, 2), -- Use DECIMAL type for better precision in monetary values
-    FOREIGN KEY (user_id) REFERENCES User(user_id), -- Add foreign key constraint
-    FOREIGN KEY (category_id) REFERENCES Categories(categories_id), -- Add foreign key constraint
-    UNIQUE (user_id, category_id) -- Add unique constraint for user and category
-);
-'''
 def create_a_budget(conn, user_id):
     print("Here are your current budget and amounts")
     db.display_user_table(conn, user_id, "Budgets")
@@ -36,18 +22,134 @@ def create_a_budget(conn, user_id):
     budget_query = f"INSERT INTO Budgets (user_id, category_id, start_date, end_date, budget_period, budget_amount) VALUES ({user_id}, {category_id}, '{start_date}', '{end_date}', '{budget_period}', {budget_amount})"
     db.execute_query(conn, budget_query)
 
-# Main
+def get_budget_and_spending(conn, user_id):
+    cursor = conn.cursor()
+
+    # Get total budget amounts for each category for the user
+    cursor.execute("""
+        SELECT c.category, SUM(b.budget_amount) as total_budget
+        FROM Budgets b
+        JOIN Categories c ON b.category_id = c.categories_id
+        WHERE b.user_id = %s
+        GROUP BY c.category
+    """, (user_id,))
+    budgets = cursor.fetchall()
+    print(budgets)
+    # Get total spending amounts for each category for the user
+    cursor.execute("""
+        SELECT c.category, SUM(t.amount) as total_spending
+        FROM Transactions t
+        JOIN Categories c ON t.category_id = c.categories_id
+        WHERE t.user_id = %s
+        GROUP BY c.category
+    """, (user_id,))
+    spendings = cursor.fetchall()
+
+    # Combine budget and spending data
+    budget_spending = {}
+    for category, total_budget in budgets:
+        budget_spending[category] = {"total_budget": total_budget, "total_spending": 0}
+
+    for category, total_spending in spendings:
+        if category in budget_spending:
+            budget_spending[category]["total_spending"] = total_spending
+
+    return budget_spending
+
+
+def budget_vs_spending_graph(conn, user_id):
+    # Fetch budget and spending data
+    budget_spending = get_budget_and_spending(conn, user_id)
+
+    # Prepare data for visualization
+    categories = list(budget_spending.keys())
+    budget_data = [x["total_budget"] for x in budget_spending.values()]
+    spending_data = [x["total_spending"] for x in budget_spending.values()]
+
+    # Create a bar chart
+    fig, ax = plt.subplots()
+    bar_width = 0.35
+    index = np.arange(len(categories))
+
+    ax.bar(index, budget_data, bar_width, label="Budget")
+    ax.bar(index + bar_width, spending_data, bar_width, label="Spending")
+
+    # Set chart labels and title
+    ax.set_xlabel("Category")
+    ax.set_ylabel("Amount")
+    ax.set_title("Budget vs. Spending")
+    ax.set_xticks(index + bar_width / 2)
+    ax.set_xticklabels(categories)
+    ax.legend()
+
+    # Display the graph
+    plt.show()
+
+def get_transactions_by_category(conn, user_id):
+    cursor = conn.cursor()
+
+    # Get the sum of transaction amounts for each category for the given user_id
+    cursor.execute("""
+        SELECT c.category, SUM(t.amount) as total_amount
+        FROM Transactions t
+        JOIN Categories c ON t.category_id = c.categories_id
+        WHERE t.user_id = %s
+        GROUP BY c.category
+    """, (user_id,))
+    transactions = cursor.fetchall()
+
+    return transactions
+
+def transactions_by_category_pie_chart(conn, user_id):
+    # Fetch transaction data grouped by category
+    transactions_by_category = get_transactions_by_category(conn, user_id)
+
+    # Prepare data for visualization
+    categories = [x[0] for x in transactions_by_category]
+    transaction_amounts = [x[1] for x in transactions_by_category]
+
+    # Create a pie chart
+    fig, ax = plt.subplots()
+    ax.pie(transaction_amounts, labels=categories, autopct='%1.1f%%', startangle=90)
+
+    # Set the title
+    ax.set_title("Transactions by Category")
+
+    # Display the pie chart
+    plt.show()
+
+def print_menu():
+    print("\nWelcome to the Credit Application Database")
+    print("Choose an option:")
+    print("1. Import transactions from CSV")
+    print("2. Create a budget")
+    print("3. Display transactions by category (Pie chart)")
+    print("4. Display budget vs. spending (Bar chart)")
+    print("5. Quit")
+
 def main():
     conn = connect_database()
-    cursor = conn.cursor()
-    print("Welcome to the Credit Application Database")
+    user_id = 2
 
-    # Test
-    display_user_table(conn, 2, 'Transactions')
-    create_a_budget(conn, 2)
+    while True:
+        print_menu()
+        choice = int(input("Enter your choice: "))
+        
+        if choice == 1:
+            import_transactions(conn)
+        elif choice == 2:
+            create_a_budget(conn, user_id)
+        elif choice == 3:
+            transactions_by_category_pie_chart(conn, user_id)
+        elif choice == 4:
+            budget_vs_spending_graph(conn, user_id)
+        elif choice == 5:
+            print("Thank you for using the Credit Application Database. Goodbye!")
+            break
+        else:
+            print("Invalid choice. Please choose from the available options.")
 
-    #import_transactions(conn)
-    cursor.close()
     conn.close()
 
-main()
+if __name__ == "__main__":
+    main()
