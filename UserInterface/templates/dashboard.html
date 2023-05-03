@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard</title>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+    <div class="container">
+        <h1 class="text-center">Dashboard</h1>
+        <div class="row">
+            <div class="col-md-6">
+                <h3>Spending history</h3>
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Transaction ID</th>
+                            <th>Card ID</th>
+                            <th>Amount</th>
+                            <th>Merchant Category ID</th>
+                            <th>Date</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for transaction in transactions %}
+                        <tr>
+                            <td>{{ transaction.transaction_id }}</td>
+                            <td>{{ transaction.card_id }}</td>
+                            <td>{{ transaction.amount }}</td>
+                            <td>{{ transaction.merchant_categoryid }}</td>
+                            <td>{{ transaction.date }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            <div class="col-md-6">
+                <h3>Spending by Category</h3>
+                <canvas id="pieChart"></canvas>
+                <h3>Spending by Budget Category</h3>
+                <canvas id="barChart"></canvas>
+            </div>
+        </div>
+        <div class="text-center">
+            <a href="{{ url_for('logout') }}" class="btn btn-danger">Logout</a>
+        </div>
+    </div>
+
+    <script>
+        const pieChartCtx = document.getElementById('pieChart').getContext('2d');
+        const pieChartData = {{ pie_chart_data|tojson }};
+        const pieChartLabels = pieChartData.map(data => data.category);
+        const pieChartValues = pieChartData.map(data => data.total);
+
+        new Chart(pieChartCtx, {
+            type: 'pie',
+            data: {
+                labels: pieChartLabels,
+                datasets: [{
+                    data: pieChartValues,
+                    backgroundColor: [
+                        // Add colors for each category
+                    ]
+                }]
+            },
+        });
+
+        const barChartCtx = document.getElementById('barChart').getContext('2d');
+        const barChartData = {{ bar_chart_data|tojson }};
+        const barChartLabels = barChartData.map(data => data.budget_category);
+        const barChartValues = barChartData.map(data => data.total);
+
+        new Chart(barChartCtx, {
+            type: 'bar',
+            data: {
+                labels: barChartLabels,
+                datasets: [{
+                    label: 'Spending by Budget Category',
+                    data: barChartValues,
+                    backgroundColor: [
+                        // Add colors for each budget category
+                    ],
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                scales: {
+                    y: {
+                        beginAtZero: true
+                    }
+                }
+            }
+        });
+
+    </script>
+
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.16.0/umd/popper.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+</body>
+</html>
+

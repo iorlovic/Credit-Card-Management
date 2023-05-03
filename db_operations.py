@@ -13,7 +13,7 @@ def connect_database():
         conn = mysql.connector.connect(
             host='localhost',
             user='root',
-            password='cpsc-408',
+            password='cpsc408!',
             auth_plugin='mysql_native_password',
             database='creditapp'
         )
