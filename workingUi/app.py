@@ -1,4 +1,5 @@
 from flask import Flask, render_template, request, redirect, url_for, flash, session
+from functools import wraps
 
 app = Flask(__name__)
 app.secret_key = "your_secret_key"
@@ -18,25 +19,49 @@ users = {
     }
 }
 
-# @app.route("/")
-# def login():
-#     return render_template("login.html")
+def login_required(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if "user_id" not in session:
+            return redirect(url_for("login"))
+        return f(*args, **kwargs)
+    return decorated_function
 
-@app.route('/')
-def main_dashboard():
-    return render_template('dashboard.html')
+@app.route("/")
+def login():
+    return render_template("login.html")
 
-@app.route("/dashboard", methods=["POST"])
+@app.route("/dashboard", methods=["GET", "POST"])
+@login_required
 def dashboard():
-    user_id = request.form["userid"]
-    email = request.form["email"]
+    if request.method == "POST":
+        user_id = request.form["userid"]
+        email = request.form["email"]
     
-    if user_id in users and users[user_id]["email"] == email:
-        session["user_id"] = user_id
-        return render_template("dashboard.html", user=users[user_id])
+        if user_id in users and users[user_id]["email"] == email:
+            session["user_id"] = user_id
+            return render_template("dashboard.html", user=users[user_id])
+        else:
+            flash("User not found or incorrect email")
+            return redirect(url_for("login"))
     else:
-        flash("User not found or incorrect email")
-        return redirect(url_for("login"))
+        user_id = session["user_id"]
+        return render_template("dashboard.html", user=users[user_id])
+
+@app.route("/transaction_history")
+@login_required
+def transaction_history():
+    return render_template("transactionhis.html")
+
+@app.route("/budget_breakdown")
+@login_required
+def budget_breakdown():
+    return render_template("bargraph.html")
+
+@app.route("/spending_by_category")
+@login_required
+def spending_by_category():
+    return render_template("pichart.html")
 
 if __name__ == "__main__":
     app.run(debug=True)
