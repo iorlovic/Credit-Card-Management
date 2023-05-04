@@ -30,10 +30,40 @@
                     <a class="nav-link" href="/spending_by_category">Spending by Category</a>
                 </li>
             </ul>
+            <ul class="navbar-nav ms-auto">
+                <li class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                        User
+                    </a>
+                    <ul class="dropdown-menu" aria-labelledby="navbarDropdown">
+                        <li><a class="dropdown-item" href="#">User ID: 12345</a></li>
+                        <li><a class="dropdown-item" href="#">Email: user@example.com</a></li>
+                    </ul>
+                </li>
+            </ul>
         </div>
-    </nav>    
-    
+    </nav>
+
     <div class="container">
+        <!-- New budget input form -->
+        <div class="row mt-5">
+            <div class="col-md-12">
+                <h3>Set Your Budget</h3>
+                <form id="budget-form">
+                    <div class="mb-3">
+                        <label for="category" class="form-label">Category</label>
+                        <input type="text" class="form-control" id="category" placeholder="Groceries, Entertainment, etc.">
+                    </div>
+                    <div class="mb-3">
+                        <label for="amount" class="form-label">Amount</label>
+                        <input type="number" class="form-control" id="amount" placeholder="0">
+                    </div>
+                    <button type="submit" class="btn btn-primary">Add Budget</button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Existing transaction history and pie chart -->
         <div class="row mt-5">
             <div class="col-md-6">
                 <h3>Transaction History</h3>
@@ -125,6 +155,33 @@
             `;
             transactionHistoryElement.appendChild(div);
         });
+
+        // Handle budget form submission
+        document.getElementById('budget-form').addEventListener('submit', function (event) {
+            event.preventDefault();
+            const categoryInput = document.getElementById('category');
+            const amountInput = document.getElementById('amount');
+            const category = categoryInput.value.trim();
+            const amount = parseFloat(amountInput.value);
+
+            if (category && amount > 0) {
+                // Add the new budget category and amount to the existing data
+                categories.push(category);
+                budgetData.push(amount);
+
+                // Update the bar chart with the new data
+                barChart.update();
+
+                // Clear the form inputs
+                categoryInput.value = '';
+                amountInput.value = '';
+            } else {
+                alert('Please enter a valid category and amount.');
+            }
+        });
     </script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.6/dist/umd/popper.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.min.js"></script>
 </body>
 </html>
+
