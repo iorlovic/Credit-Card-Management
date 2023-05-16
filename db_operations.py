@@ -13,14 +13,15 @@ def connect_database():
         conn = mysql.connector.connect(
             host='localhost',
             user='root',
-            password='cpsc408!',
+            password='cpsc-408',
             auth_plugin='mysql_native_password',
             database='creditapp'
         )
-        print("Connection to MySQL DB successful")
+        if conn.is_connected():
+            print("Connection to MySQL DB successful")
+        return conn
     except Error as e:
         print(f"The error '{e}' occurred")
-    return conn
 
 def execute_query(connection, query):
     cursor = connection.cursor()
@@ -186,3 +187,117 @@ def add_transaction(conn, user_id):
     cursor.execute("INSERT INTO Transactions (user_id, merchant, amount, date) VALUES (%s, %s, %s, %s)", (user_id, merchant, amount, date))
     conn.commit()
     print("Transaction added successfully")
+
+def delete_transaction(conn, user_id, transaction_id):
+    # Create a cursor to execute SQL queries
+    cursor = conn.cursor()
+    # Prepare the SQL query for deleting the transaction
+    query = "DELETE FROM Transactions WHERE transaction_id = %s AND user_id = %s"
+    try:
+        # Execute the query
+        cursor.execute(query, (transaction_id, user_id))
+        # Commit the transaction
+        conn.commit()
+        # Fetch the number of affected rows
+        rows_affected = cursor.rowcount
+        if rows_affected == 0:
+            print("No such transaction found for the given user.")
+        else:
+            print("Transaction deleted successfully")
+    except Error as e:
+        print(f"The error '{e}' occurred")
+    # Close the cursor
+    cursor.close()
+
+def update_transaction(conn, user_id, transaction_id, new_amount):
+    # Create a cursor to execute SQL queries
+    cursor = conn.cursor()
+
+    # Prepare the SQL query for updating the transaction
+    query = "UPDATE Transactions SET amount = %s WHERE user_id = %s AND transaction_id = %s"
+
+    try:
+        # Execute the query
+        cursor.execute(query, (new_amount, user_id, transaction_id))
+
+        # Commit the transaction
+        conn.commit()
+
+        # Check if a row was affected (updated)
+        if cursor.rowcount > 0:
+            print("Transaction updated successfully")
+        else:
+            print("No transaction found with the provided user ID and transaction ID")
+
+    except Error as e:
+        print(f"The error '{e}' occurred")
+
+    # Close the cursor
+    cursor.close()
+
+def generate_user_report(conn, user_id):
+    cursor = conn.cursor()
+    query = f"""
+        SELECT
+            u.user_id,
+            u.first_name,
+            u.last_name,
+            u.email,
+            t.card_id,
+            c.card_provider,
+            COUNT(*) as total_transactions,
+            SUM(t.amount) as total_spent,
+            AVG(t.amount) as average_spent_per_transaction,
+            (SELECT merchant FROM Transactions WHERE user_id = u.user_id GROUP BY merchant ORDER BY COUNT(*) DESC LIMIT 1) as most_frequent_merchant,
+            cat.category as most_spent_category,
+            (SELECT budget_amount FROM Budgets WHERE user_id = u.user_id AND category_id = cat.categories_id) as budget_for_most_spent_category,
+            ((SUM(t.amount) / (SELECT budget_amount FROM Budgets WHERE user_id = u.user_id AND category_id = cat.categories_id)) * 100) as budget_utilization
+        FROM User u
+        INNER JOIN Credit_Cards c ON u.user_id = c.user_id
+        INNER JOIN Transactions t ON c.card_id = t.card_id
+        INNER JOIN Categories cat ON t.category_id = cat.categories_id
+        WHERE u.user_id = {user_id}
+        GROUP BY u.user_id, u.first_name, u.last_name, u.email, t.card_id, c.card_provider, cat.category, cat.categories_id
+        ORDER BY total_spent DESC;
+    """
+    df = pd.read_sql(query, conn)
+    df.to_csv(f'user_{user_id}_report.csv', index=False)
+
+
+
+def admin_user_report(conn):
+    # SQL query to retrieve the user report
+    query = """
+        SELECT
+            u.user_id,
+            u.first_name,
+            u.last_name,
+            u.email,
+            t.card_id,
+            c.card_provider,
+            COUNT(*) as total_transactions,
+            SUM(t.amount) as total_spent
+        FROM User u
+        INNER JOIN Credit_Cards c ON u.user_id = c.user_id
+        INNER JOIN Transactions t ON c.card_id = t.card_id
+        GROUP BY u.user_id, t.card_id
+        ORDER BY total_spent DESC;
+    """
+
+    # Execute the query and fetch the results
+    cursor = conn.cursor()
+    cursor.execute(query)
+    results = cursor.fetchall()
+
+    # Convert the results to a Pandas DataFrame
+    df = pd.DataFrame(results, columns=['user_id', 'first_name', 'last_name', 'email', 'card_id', 'card_provider', 'total_transactions', 'total_spent'])
+
+    # Print the report
+    print(df)
+
+    # Export the report to a CSV file
+    df.to_csv('admin_user_report.csv', index=False)
+
+    # Close the cursor and connection
+    cursor.close()
+    conn.close()

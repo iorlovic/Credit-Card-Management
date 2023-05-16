@@ -1,6 +1,6 @@
+# Authors: Tor Parawell
 from db_operations import *
 import db_operations as db
-
 def display_table(conn, tablename):
     db.pretty_print_table(conn, tablename)
 
@@ -9,7 +9,7 @@ def display_user_table (conn, user_id, tablename):
 
 def create_a_budget(conn, user_id):
     print("Here are your current budget and amounts")
-    db.display_user_table(conn, user_id, "Budgets")
+    display_user_table(conn, user_id, "Budgets")
 
     display_table(conn, "Categories")
     category_id = input("Enter a category id for your budget: ")
@@ -20,7 +20,7 @@ def create_a_budget(conn, user_id):
     budget_period = input("Enter the budget period (YYYY): ")
 
     budget_query = f"INSERT INTO Budgets (user_id, category_id, start_date, end_date, budget_period, budget_amount) VALUES ({user_id}, {category_id}, '{start_date}', '{end_date}', '{budget_period}', {budget_amount})"
-    db.execute_query(conn, budget_query)
+    execute_query(conn, budget_query)
 
 def get_budget_and_spending(conn, user_id):
     cursor = conn.cursor()
@@ -118,6 +118,11 @@ def transactions_by_category_pie_chart(conn, user_id):
     # Display the pie chart
     plt.show()
 
+def delete_transactions(conn, user_id):
+    display_user_table(conn, user_id, "Transactions")
+    transaction_id = input("Enter the transaction id to delete: ")
+    db.delete_transaction(conn, user_id, transaction_id)
+
 def print_menu():
     print("\nWelcome to the Credit Application Database")
     print("Choose an option:")
@@ -131,12 +136,15 @@ def print_menu():
     print("8. Print transactions by category_id")
     print("9. Add a financial statement")
     print("10. Print SQL tables")
-    print("11. Exit")
+    print("11. Delete a transaction")
+    print("12. Update transactions")
+    print("13: Generate reports")
+    print("14. Exit")
 
 def main():
     conn = connect_database()
     user_id = 2
-
+    admin_user_report(conn)
     while True:
         print_menu()
         choice = int(input("Enter your choice: "))
@@ -164,11 +172,18 @@ def main():
             print_table = input("Which table would you like to print? ")
             display_table(conn, print_table)
         elif choice == 11:
+            delete_transactions(conn, user_id)
+        elif choice == 12:
+            transaction_id = input("Enter the transaction ID to be updated: ")
+            new_amount = input("Enter the new amount: ")
+            update_transaction(conn, user_id, transaction_id, new_amount)
+        elif choice == 13:
+            db.generate_user_report(conn, user_id)
+        elif choice == 14:
             print("Thank you for using the Credit Application Database. Goodbye!")
             break
         else:
             print("Invalid choice. Please choose from the available options.")
-
     conn.close()
 
 if __name__ == "__main__":
