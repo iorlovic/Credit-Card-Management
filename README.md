@@ -14,5 +14,11 @@ List of Functionality:
 - incorporate login using user email and user_id
 - 
 
+How to run:
+1. Clone github repository.
+2. in command line write "python3 app.py"
+3. Copy outputted link to URL.
+
 More notes:
 - for the import csv function, csv_standardize.py allows user to be able to upload raw amex data, and it formats it correctly.
+
