@@ -19,6 +19,21 @@ def connect_database():
         )
         if conn.is_connected():
             print("Connection to MySQL DB successful")
+
+        cursor = conn.cursor()
+        
+        cursor.execute("SHOW INDEX FROM Transactions WHERE Key_name = 'idx_transactions_user_id'")
+        result = cursor.fetchone()
+
+        if not result:
+            # Create an index if it does not exist
+            create_index_query = """
+                CREATE INDEX idx_transactions_user_id
+                ON Transactions (user_id);
+            """
+            cursor.execute(create_index_query)
+            print("Index created successfully.")
+        
         return conn
     except Error as e:
         print(f"The error '{e}' occurred")
@@ -139,17 +154,23 @@ def import_transactions(conn):
     else:
         print("File not found. Please enter a valid file path.")
 
-import mysql.connector
-
-# Create a new user
 def create_user(conn):
     email = input("Enter user email: ")
-    first_name = input("Enter first name: ")
-    last_name = input("Enter last name: ")
+    first_name = input("Enter first_name: ")
+    last_name = input("Enter last_name: ")
     cursor = conn.cursor()
-    cursor.execute("INSERT INTO User (email, first_name, last_name) VALUES (%s, %s, %s)", (email, first_name, last_name))
-    conn.commit()
-    print("User created successfully")
+    try:
+        cursor.execute("START TRANSACTION")  # Begin the transaction
+
+        cursor.execute("INSERT INTO User (email, first_name, last_name) VALUES (%s, %s, %s)",
+                        (email, first_name, last_name))
+        cursor.execute("COMMIT")  # Commit the transaction
+        print("User created successfully")
+    except Exception as e:
+        print(f"An error occurred: {e}")
+        cursor.execute("ROLLBACK")  # Rollback the transaction in case of an error
+    finally:
+        cursor.close()
 
 # Create a new card
 def create_card(conn, user_id):
@@ -298,6 +319,25 @@ def admin_user_report(conn):
     # Export the report to a CSV file
     df.to_csv('admin_user_report.csv', index=False)
 
-    # Close the cursor and connection
     cursor.close()
-    conn.close()
+
+# Create a view for a user's transactions with the given user ID for the UI page
+def create_user_transactions_view(conn, user_id):
+    cursor = conn.cursor()
+    cursor.execute("""
+        CREATE OR REPLACE VIEW user_transactions AS 
+        SELECT t.* 
+        FROM Transactions t
+        WHERE t.user_id = %s;
+    """, (user_id,))
+
+
+def get_user_transactions(conn, user_id):
+    cursor = conn.cursor()
+    cursor.execute("""
+        SELECT t.* 
+        FROM Transactions t
+        WHERE t.user_id = %s;
+    """, (user_id,))
+    return cursor.fetchall()
+
