@@ -10,6 +10,7 @@ import pandas as pd
 
 def connect_database():
     try: 
+        # Tor
         conn = mysql.connector.connect(
             host='localhost',
             user='root',
@@ -17,6 +18,16 @@ def connect_database():
             auth_plugin='mysql_native_password',
             database='creditapp'
         )
+
+        # Lily
+        # conn = mysql.connector.connect(
+        #     host='localhost',
+        #     user='root',
+        #     password='cpsc408!',
+        #     auth_plugin='mysql_native_password',
+        #     database='CreditApp'
+        # )
+
         if conn.is_connected():
             print("Connection to MySQL DB successful")
         return conn

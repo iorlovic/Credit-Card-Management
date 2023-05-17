@@ -1,5 +1,6 @@
 # db-management-group-project
 Credit card and budget tracker
+Tor Parawell, Ivan Orlovic, Lily Anne, Cal Hegstrom
 
 List of Functionality:
 - Create user graphs from transactions

@@ -1,0 +1,5 @@
+user_id,first_name,last_name,email,card_id,card_provider,total_transactions,total_spent
+2,Jane,Smith,jane.smith@example.com,2,Mastercard,1,200.00
+1,John,Doe,john.doe@example.com,1,Visa,2,150.00
+3,Michael,Brown,michael.brown@example.com,3,American Express,1,75.00
+4,Emily,Johnson,emily.johnson@example.com,4,Discover,1,30.00
