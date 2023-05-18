@@ -31,9 +31,9 @@ Will allow users who have logged in to upload their financial statements from a 
 
 * In class notes and lecture 
 * previous assignments
-* Ivan took a UI class in Madrid
+* Ivan took a UI class last semester
 * geekforgeeks
-* chatgpt for sample data 
+* chatgpt for sample data and helping with errors
 
 ## Known Errors
 
