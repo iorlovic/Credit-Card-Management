@@ -7,6 +7,7 @@ from datetime import datetime
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
+from pandas.io.formats.style import Styler
 
 def connect_database():
     try: 
@@ -30,6 +31,21 @@ def connect_database():
 
         if conn.is_connected():
             print("Connection to MySQL DB successful")
+
+        cursor = conn.cursor()
+        
+        cursor.execute("SHOW INDEX FROM Transactions WHERE Key_name = 'idx_transactions_user_id'")
+        result = cursor.fetchone()
+
+        if not result:
+            # Create an index if it does not exist
+            create_index_query = """
+                CREATE INDEX idx_transactions_user_id
+                ON Transactions (user_id);
+            """
+            cursor.execute(create_index_query)
+            print("Index created successfully.")
+        
         return conn
     except Error as e:
         print(f"The error '{e}' occurred")
@@ -150,17 +166,23 @@ def import_transactions(conn):
     else:
         print("File not found. Please enter a valid file path.")
 
-import mysql.connector
-
-# Create a new user
 def create_user(conn):
     email = input("Enter user email: ")
-    first_name = input("Enter first name: ")
-    last_name = input("Enter last name: ")
+    first_name = input("Enter first_name: ")
+    last_name = input("Enter last_name: ")
     cursor = conn.cursor()
-    cursor.execute("INSERT INTO User (email, first_name, last_name) VALUES (%s, %s, %s)", (email, first_name, last_name))
-    conn.commit()
-    print("User created successfully")
+    try:
+        cursor.execute("START TRANSACTION")  # Begin the transaction
+
+        cursor.execute("INSERT INTO User (email, first_name, last_name) VALUES (%s, %s, %s)",
+                        (email, first_name, last_name))
+        cursor.execute("COMMIT")  # Commit the transaction
+        print("User created successfully")
+    except Exception as e:
+        print(f"An error occurred: {e}")
+        cursor.execute("ROLLBACK")  # Rollback the transaction in case of an error
+    finally:
+        cursor.close()
 
 # Create a new card
 def create_card(conn, user_id):
@@ -248,21 +270,18 @@ def update_transaction(conn, user_id, transaction_id, new_amount):
 
 def generate_user_report(conn, user_id):
     cursor = conn.cursor()
+
     query = f"""
         SELECT
-            u.user_id,
-            u.first_name,
-            u.last_name,
-            u.email,
-            t.card_id,
             c.card_provider,
             COUNT(*) as total_transactions,
             SUM(t.amount) as total_spent,
             AVG(t.amount) as average_spent_per_transaction,
-            (SELECT merchant FROM Transactions WHERE user_id = u.user_id GROUP BY merchant ORDER BY COUNT(*) DESC LIMIT 1) as most_frequent_merchant,
+            (SELECT merchant FROM Transactions WHERE user_id = {user_id} AND category_id = cat.categories_id GROUP BY merchant ORDER BY COUNT(*) DESC LIMIT 1) as most_frequent_merchant_per_category,
+            (SELECT COUNT(*) FROM Transactions WHERE user_id = {user_id} AND merchant = (SELECT merchant FROM Transactions WHERE user_id = {user_id} AND category_id = cat.categories_id GROUP BY merchant ORDER BY COUNT(*) DESC LIMIT 1)) as visits_to_most_frequent_merchant_per_category,
             cat.category as most_spent_category,
-            (SELECT budget_amount FROM Budgets WHERE user_id = u.user_id AND category_id = cat.categories_id) as budget_for_most_spent_category,
-            ((SUM(t.amount) / (SELECT budget_amount FROM Budgets WHERE user_id = u.user_id AND category_id = cat.categories_id)) * 100) as budget_utilization
+            (SELECT budget_amount FROM Budgets WHERE user_id = {user_id} AND category_id = cat.categories_id) as budget_for_most_spent_category,
+            ((SUM(t.amount) / (SELECT budget_amount FROM Budgets WHERE user_id = {user_id} AND category_id = cat.categories_id)) * 100) as budget_utilization
         FROM User u
         INNER JOIN Credit_Cards c ON u.user_id = c.user_id
         INNER JOIN Transactions t ON c.card_id = t.card_id
@@ -271,9 +290,35 @@ def generate_user_report(conn, user_id):
         GROUP BY u.user_id, u.first_name, u.last_name, u.email, t.card_id, c.card_provider, cat.category, cat.categories_id
         ORDER BY total_spent DESC;
     """
-    df = pd.read_sql(query, conn)
-    df.to_csv(f'user_{user_id}_report.csv', index=False)
 
+    df = pd.read_sql(query, conn)
+    
+    # Improve the aesthetics of the DataFrame
+    df_styler = df.style.set_table_styles(
+        [dict(selector="th", props=[("font-size", "150%"), ("text-align", "center")]),
+         dict(selector="td", props=[("font-size", "120%"), ("text-align", "center")])])
+    
+    # Write DataFrame to an Excel file
+    with pd.ExcelWriter(f'ex_user_{user_id}_report.xlsx', engine='xlsxwriter') as writer:
+        df_styler.to_excel(writer, index=False, sheet_name='Report')
+        # Get xlsxwriter objects
+        workbook  = writer.book
+        worksheet = writer.sheets['Report']
+        
+        # Set the column width and format
+        worksheet.set_column('A:J', 20)
+        
+        # Add a header format
+        header_format = workbook.add_format({
+            'bold': True,
+            'text_wrap': True,
+            'valign': 'top',
+            'fg_color': '#D7E4BC',
+            'border': 1})
+
+        # Write the column headers with the defined format.
+        for col_num, value in enumerate(df.columns.values):
+            worksheet.write(0, col_num, value, header_format)
 
 
 def admin_user_report(conn):
@@ -309,6 +354,25 @@ def admin_user_report(conn):
     # Export the report to a CSV file
     df.to_csv('admin_user_report.csv', index=False)
 
-    # Close the cursor and connection
     cursor.close()
-    conn.close()
+
+# Create a view for a user's transactions with the given user ID for the UI page
+def create_user_transactions_view(conn, user_id):
+    cursor = conn.cursor()
+    cursor.execute("""
+        CREATE OR REPLACE VIEW user_transactions AS 
+        SELECT t.* 
+        FROM Transactions t
+        WHERE t.user_id = %s;
+    """, (user_id,))
+
+
+def get_user_transactions(conn, user_id):
+    cursor = conn.cursor()
+    cursor.execute("""
+        SELECT t.* 
+        FROM Transactions t
+        WHERE t.user_id = %s;
+    """, (user_id,))
+    return cursor.fetchall()
+
