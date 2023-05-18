@@ -10,11 +10,14 @@ users = {
         "email": "user1@example.com",
         "credit_cards": [
             {"card_id": 1, "card_provider": "Visa"},
-            {"card_id": 2, "card_provider": "Mastercard"}
+            {"card_id": 2, "card_provider": "Mastercard"},
+            {"card_id": 3, "card_provider": "American Express"},
+            {"card_id": 4, "card_provider": "Discover"}
         ],
         "transactions": [
             {"transaction_id": 1, "card_id": 1, "amount": 100, "category_id": 1, "date": "2023-05-01"},
             {"transaction_id": 2, "card_id": 1, "amount": 50, "category_id": 2, "date": "2023-05-02"},
+            
         ]
     }
 }
