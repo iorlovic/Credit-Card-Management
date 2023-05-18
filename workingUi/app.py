@@ -4,7 +4,7 @@ from functools import wraps
 app = Flask(__name__)
 app.secret_key = "your_secret_key"
 
-# Sample data for demonstration purposes only
+# Sample data
 users = {
     "user1": {
         "email": "user1@example.com",
@@ -69,7 +69,6 @@ def spending_by_category():
 
 @app.route('/logout')
 def logout():
-    # your logout logic here
     return redirect(url_for('login'))
 
 @app.route('/profile')
