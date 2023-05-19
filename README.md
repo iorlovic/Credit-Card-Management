@@ -16,6 +16,7 @@ Will allow users who have logged in to upload their financial statements from a 
 * Assignment: Final Project
 
 ## Source Files  
+* Front End -------------------
 * styles.css
 * bargraph.html
 * dashboard.html
@@ -25,6 +26,16 @@ Will allow users who have logged in to upload their financial statements from a 
 * profile.html
 * transactionhis.html
 * app.py
+* Back end -------------------
+* app.py
+* create_schema.py
+* csv_standardize.py
+* data-dump.sql
+* db_operations.py
+* README.md
+* sample_data.sql
+* table create.sql
+* transactions.csv
 * README.md
 
 ## References
