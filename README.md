@@ -38,15 +38,6 @@ Will allow users who have logged in to upload their financial statements from a 
 * transactions.csv
 * README.md
 
-## References
-
-* In class notes and lecture 
-* previous assignments
-* Ivan took a UI class last semester
-* geekforgeeks
-* chatgpt for sample data and helping with errors
-
-
 ## Functionalities
 List of Functionality:
 - Create user graphs from transactions
