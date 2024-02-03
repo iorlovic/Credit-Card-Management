@@ -22,6 +22,12 @@ users = {
     }
 }
 
+@app.before_request
+def automatically_log_in_user():
+    # Automatically log in a specific user for every request, except when logging out.
+    if 'logout' not in request.endpoint:  # This prevents auto-login on the logout route.
+        session['user_id'] = 'user1'  # Assuming 'user1' exists in your `users` dictionary.
+
 def login_required(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
@@ -70,8 +76,12 @@ def budget_breakdown():
 def spending_by_category():
     return render_template("pichart.html")
 
+# @app.route('/logout')
+# def logout():
+#     return redirect(url_for('login'))
 @app.route('/logout')
 def logout():
+    session.pop('user_id', None)  # This ensures the user is logged out.
     return redirect(url_for('login'))
 
 @app.route('/profile')
